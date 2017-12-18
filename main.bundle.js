@@ -10512,9 +10512,11 @@ var topColor = function topColor(data) {
 
 var makeSwatches = function makeSwatches(userInput) {
   var wordArray = userInput.replace(/\./g, ' ').toLowerCase().split(' ');
+  var allColorWords = [];
   var filteredWords = {};
   wordArray.forEach(function (word) {
     if (colors.hasOwnProperty(word)) {
+      allColorWords.push(word);
       if (filteredWords[word]) {
         filteredWords[word] += 1;
       } else {
@@ -10522,7 +10524,7 @@ var makeSwatches = function makeSwatches(userInput) {
       }
     }
   });
-  helpers.makeSwatches(Object.keys(filteredWords));
+  helpers.makeSwatches(filteredWords, allColorWords);
 };
 
 module.exports = {
@@ -10552,6 +10554,7 @@ var listeners = __webpack_require__(11);
 $(document).ready(function () {
   ajaxReq.getTopColor();
   listeners.colorizeListener;
+  listeners.returnListener;
 });
 
 /***/ }),
@@ -11156,11 +11159,16 @@ module.exports = function (css) {
 
 
 var $ = __webpack_require__(0);
+var apiUrl = 'https://color-swatch-api.herokuapp.com/';
 var dataColors = __webpack_require__(1);
+var ajaxReq = __webpack_require__(2);
 
-var makeSwatches = function makeSwatches(colors) {
-  colors.forEach(function (color) {
+var makeSwatches = function makeSwatches(colors, allColorWords) {
+  Object.keys(colors).forEach(function (color) {
     $('article.colorized-text').append('<div class="swatch" style="background-color:' + dataColors[color] + '"></div>');
+  });
+  allColorWords.forEach(function (word) {
+    $.post(apiUrl + '/api/v1/colors', { color: { value: word } });
   });
 };
 
@@ -11176,7 +11184,6 @@ module.exports = {
 
 
 var $ = __webpack_require__(0);
-var ajaxReq = __webpack_require__(2);
 var handlers = __webpack_require__(3);
 
 var colorizeListener = $('button').click(function (event) {
@@ -11185,8 +11192,16 @@ var colorizeListener = $('button').click(function (event) {
   handlers.makeSwatches(userInput);
 });
 
+var returnListener = $('textarea').keyup(function (event) {
+  if (event.which === 13) {
+    var userInput = $('textarea')[0].value.trim();
+    handlers.makeSwatches(userInput);
+  }
+});
+
 module.exports = {
-  colorizeListener: colorizeListener
+  colorizeListener: colorizeListener,
+  returnListener: returnListener
 };
 
 /***/ })
